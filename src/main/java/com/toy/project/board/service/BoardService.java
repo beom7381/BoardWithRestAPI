@@ -1,7 +1,9 @@
 package com.toy.project.board.service;
 
 import com.toy.project.board.dto.ArticleCreateRequest;
+import com.toy.project.board.dto.ArticleDeleteRequest;
 import com.toy.project.board.dto.ArticleResponse;
+import com.toy.project.board.dto.ArticleUpdateRequest;
 import com.toy.project.board.entity.Article;
 import com.toy.project.board.repository.BoardRepository;
 import com.toy.project.board.util.ArticleMapperContainer;
@@ -10,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BoardService {
@@ -57,5 +60,38 @@ public class BoardService {
         var wroteArticle = boardRepository.save(newArticle);
 
         return articleReadMapper.toDto(wroteArticle);
+    }
+
+    @Transactional
+    public ArticleResponse updateArticle(ArticleUpdateRequest articleUpdateRequest){
+        var articleUpdateMapper = articleMapperContainer.getArticleUpdateMapper();
+        var targetArticle = boardRepository.findById(articleUpdateRequest.getId()).orElse(null);
+        var requestUser = userRepository.findByUserId(articleUpdateRequest.getRequestUserId());
+
+        if(targetArticle != null){
+            if(targetArticle.getWriter().getId().equals(requestUser.getId())){
+                targetArticle.setTitle(articleUpdateRequest.getTitle());
+                targetArticle.setContent(articleUpdateRequest.getContent());
+
+                return articleUpdateMapper.toDto(targetArticle);
+            }
+        }
+
+        return null;
+    }
+
+    public boolean deleteArticle(ArticleDeleteRequest articleDeleteRequest){
+        var targerArticle = boardRepository.findById(articleDeleteRequest.getId()).orElse(null);
+        var requestUser = userRepository.findByUserId(articleDeleteRequest.getRequestUserId());
+
+        if(targerArticle != null){
+            if(targerArticle.getWriter().getId().equals(requestUser.getId())){
+                boardRepository.delete(targerArticle);
+
+                return true;
+            }
+        }
+
+        return false;
     }
 }

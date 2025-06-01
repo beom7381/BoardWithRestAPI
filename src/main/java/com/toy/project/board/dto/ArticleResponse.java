@@ -14,7 +14,7 @@ public class ArticleResponse {
     protected Long id;
     protected User writer;
     protected String title;
-    private String content;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    protected String content;
+    protected LocalDateTime createdAt;
+    protected LocalDateTime updatedAt;
 }
