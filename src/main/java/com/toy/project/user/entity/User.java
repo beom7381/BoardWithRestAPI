@@ -1,5 +1,6 @@
 package com.toy.project.user.entity;
 
+import com.toy.project.base.EntityInterface;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @ToString
 @Table(name = "USERS")
-public class User {
+public class User implements EntityInterface {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;

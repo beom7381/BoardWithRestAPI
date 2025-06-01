@@ -2,28 +2,42 @@ package com.toy.project.user.service;
 
 import com.toy.project.user.dto.SignInRequest;
 import com.toy.project.user.dto.SignUpRequest;
-import com.toy.project.user.dto.SignUpResponse;
+import com.toy.project.user.dto.UserDataResponse;
 import com.toy.project.user.exception.DuplicateIdException;
 import com.toy.project.user.exception.DuplicateNameException;
 import com.toy.project.user.repository.UserRepository;
-import com.toy.project.user.util.UserMapper;
+import com.toy.project.user.util.UserMapperContainer;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
 public class UserService {
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
+    private final UserMapperContainer userMapperContainer;
 
     public UserService(UserRepository userRepository,
-                       UserMapper userMapper) {
+                       UserMapperContainer userMapperContainer) {
         this.userRepository = userRepository;
-        this.userMapper = userMapper;
+        this.userMapperContainer = userMapperContainer;
     }
 
-    public SignUpResponse signUp(SignUpRequest signUpRequest) {
-        var newUser = userMapper.toEntity(signUpRequest, SignUpRequest.class);
+    public List<UserDataResponse> getUserList(){
+        var userDataResponseMapper = userMapperContainer.getUserDataResponseMapper();
+
+        return userRepository.findAll()
+                             .stream()
+                             .map(userDataResponseMapper::toDto)
+                             .toList();
+    }
+
+    public UserDataResponse signUp(SignUpRequest signUpRequest) {
+        var userCreateMapper = userMapperContainer.getUserCreateMapper();
+        var userDataResponseMapper = userMapperContainer.getUserDataResponseMapper();
+        var newUser = userCreateMapper.toEntity(signUpRequest);
 
         if(userRepository.existsByUserId(newUser.getUserId())){
             throw new DuplicateIdException("중복된 아이디");
@@ -33,12 +47,17 @@ public class UserService {
             throw new DuplicateNameException("중복된 이름");
         }
 
-        return userMapper.toDto(userRepository.save(newUser), SignUpResponse.class);
+        return userDataResponseMapper.toDto(userRepository.save(newUser));
     }
 
-    public SignUpResponse signIn(SignInRequest signInRequest) {
-        var request = userMapper.toEntity(signInRequest, SignInRequest.class);
+    public UserDataResponse signIn(SignInRequest signInRequest) {
+        var userDataResponseMapper = userMapperContainer.getUserDataResponseMapper();
+        var user = userRepository.findByUserIdAndUserPw(signInRequest.getUserId(), signInRequest.getUserPw());
 
-        return new SignUpResponse("dummy_user_id", "dummy_user_name");
+        return userDataResponseMapper.toDto(user);
+    }
+
+    public void signOut(HttpSession session){
+        session.invalidate();
     }
 }

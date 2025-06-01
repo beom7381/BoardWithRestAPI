@@ -1,5 +1,6 @@
 package com.toy.project.user.dto;
 
+import com.toy.project.base.DtoInterface;
 import lombok.*;
 
 @Getter
@@ -7,7 +8,8 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class SignUpResponse {
+public class UserDataResponse implements DtoInterface {
+    private Long id;
     private String userId;
     private String userName;
 }
