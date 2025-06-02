@@ -26,7 +26,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/user/signin", "/api/user/signup").permitAll()
+                        .requestMatchers("/api/user/signin",
+                                "/api/user/signup",
+                                "swagger-ui/index.html").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthorizationFilter(userService, jwtUtil),

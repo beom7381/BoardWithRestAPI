@@ -31,21 +31,26 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
+            boolean debugmode = false;
+
             String token = jwtUtil.resolveToken(request.getHeader("Authorization"));
 
-            log.info("토큰 : " + token);
-
-            if (token != null && jwtUtil.validateToken(token)) {
-                String userId = jwtUtil.getUserId(token);
-                User authenUser = userService.getUserFromUserId(userId);
-
-                log.info("1진입");
-
+            if(debugmode){
                 UsernamePasswordAuthenticationToken authenticationToken
-                        = new UsernamePasswordAuthenticationToken(authenUser, null, null);
+                        = new UsernamePasswordAuthenticationToken("hi", null, null);
 
-                log.info("2진입");
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            }
+            else{
+                if (token != null && jwtUtil.validateToken(token) && !debugmode) {
+                    String userId = jwtUtil.getUserId(token);
+                    User authenUser = userService.getUserFromUserId(userId);
+
+                    UsernamePasswordAuthenticationToken authenticationToken
+                            = new UsernamePasswordAuthenticationToken(authenUser, null, null);
+
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
             }
         }
         catch (JwtException exception){
