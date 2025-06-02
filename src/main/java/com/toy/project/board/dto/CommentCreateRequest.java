@@ -7,8 +7,9 @@ import lombok.*;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public class ArticleCreateRequest {
+public class CommentCreateRequest {
+    Long articleId;
+    Long parentId;
     String requestUserId;
-    String title;
-    String content;
+    String body;
 }

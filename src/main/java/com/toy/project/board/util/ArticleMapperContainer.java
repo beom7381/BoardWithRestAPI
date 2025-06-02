@@ -1,18 +1,24 @@
 package com.toy.project.board.util;
 
+import com.toy.project.base.DtoToEntityMapperInterface;
+import com.toy.project.base.EntityToDtoMapperInterface;
+import com.toy.project.board.dto.ArticleCreateRequest;
+import com.toy.project.board.dto.ArticleResponse;
+import com.toy.project.board.entity.Article;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Getter
 @Component
 public class ArticleMapperContainer {
-    private final ArticleCreateMapper articleCreateMapper;
-    private final ArticleReadMapper articleReadMapper;
-    private final ArticleUpdateMapper articleUpdateMapper;
+    private final DtoToEntityMapperInterface<Article, ArticleCreateRequest> articleCreateMapper;
+    private final EntityToDtoMapperInterface<Article, ArticleResponse> articleReadMapper;
 
-    public ArticleMapperContainer(){
-        this.articleCreateMapper = new ArticleCreateMapper();
-        this.articleReadMapper = new ArticleReadMapper();
-        this.articleUpdateMapper = new ArticleUpdateMapper();
+    public ArticleMapperContainer(
+            @Qualifier("articleCreateMapper") DtoToEntityMapperInterface<Article, ArticleCreateRequest> articleCreateMapper,
+            @Qualifier("articleReadMapper") EntityToDtoMapperInterface<Article, ArticleResponse> articleReadMapper) {
+        this.articleCreateMapper = articleCreateMapper;
+        this.articleReadMapper = articleReadMapper;
     }
 }

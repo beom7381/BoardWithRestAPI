@@ -4,7 +4,7 @@ import com.toy.project.board.dto.ArticleCreateRequest;
 import com.toy.project.board.dto.ArticleResponse;
 import com.toy.project.board.dto.ArticleUpdateRequest;
 import com.toy.project.board.entity.Article;
-import com.toy.project.board.repository.BoardRepository;
+import com.toy.project.board.repository.ArticleRepository;
 import com.toy.project.board.util.ArticleMapperContainer;
 import com.toy.project.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
@@ -14,15 +14,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class BoardService {
-    private final BoardRepository boardRepository;
+public class ArticleService {
+    private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
     private final ArticleMapperContainer articleMapperContainer;
 
-    public BoardService(BoardRepository boardRepository,
-                        UserRepository userRepository,
-                        ArticleMapperContainer articleMapperContainer) {
-        this.boardRepository = boardRepository;
+    public ArticleService(ArticleRepository boardRepository,
+                          UserRepository userRepository,
+                          ArticleMapperContainer articleMapperContainer) {
+        this.articleRepository = boardRepository;
         this.userRepository = userRepository;
         this.articleMapperContainer = articleMapperContainer;
     }
@@ -32,13 +32,13 @@ public class BoardService {
 
         var pageRequest = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        return boardRepository.findAll(pageRequest).map(articleReadMapper::toDto);
+        return articleRepository.findAll(pageRequest).map(articleReadMapper::toDto);
     }
 
     public ArticleResponse getArticle(Long id) {
         var articleReadMapper = articleMapperContainer.getArticleReadMapper();
 
-        Article article = boardRepository.findById(id).orElse(null);
+        Article article = articleRepository.findById(id).orElse(null);
 
         if (article != null) {
             return articleReadMapper.toDto(article);
@@ -52,17 +52,17 @@ public class BoardService {
         var articleReadMapper = articleMapperContainer.getArticleReadMapper();
 
         var newArticle = articleCreateMapper.toEntity(articleCreateRequest);
-        newArticle.setWriter(userRepository.findByUserId(articleCreateRequest.getWriterId()));
+        newArticle.setWriter(userRepository.findByUserId(articleCreateRequest.getRequestUserId()));
 
-        var wroteArticle = boardRepository.save(newArticle);
+        var wroteArticle = articleRepository.save(newArticle);
 
         return articleReadMapper.toDto(wroteArticle);
     }
 
     @Transactional
     public ArticleResponse updateArticle(ArticleUpdateRequest articleUpdateRequest) {
-        var articleUpdateMapper = articleMapperContainer.getArticleUpdateMapper();
-        var targetArticle = boardRepository.findById(articleUpdateRequest.getId()).orElse(null);
+        var articleReadMapper = articleMapperContainer.getArticleReadMapper();
+        var targetArticle = articleRepository.findById(articleUpdateRequest.getId()).orElse(null);
         var requestUser = userRepository.findByUserId(articleUpdateRequest.getRequestUserId());
 
         if (targetArticle != null) {
@@ -70,7 +70,7 @@ public class BoardService {
                 targetArticle.setTitle(articleUpdateRequest.getTitle());
                 targetArticle.setContent(articleUpdateRequest.getContent());
 
-                return articleUpdateMapper.toDto(targetArticle);
+                return articleReadMapper.toDto(targetArticle);
             }
         }
 
@@ -78,10 +78,10 @@ public class BoardService {
     }
 
     public boolean deleteArticle(Long id) {
-        var targerArticle = boardRepository.findById(id).orElse(null);
+        var targerArticle = articleRepository.findById(id).orElse(null);
 
         if (targerArticle != null) {
-            boardRepository.delete(targerArticle);
+            articleRepository.delete(targerArticle);
 
             return true;
         }

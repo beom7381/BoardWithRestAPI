@@ -5,9 +5,11 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ArticleDeleteRequest {
+public class CommentUpdateRequest {
     private Long id;
     private String requestUserId;
+    private String body;
 }
