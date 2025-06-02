@@ -4,9 +4,12 @@ import com.toy.project.board.dto.ArticleCreateRequest;
 import com.toy.project.board.dto.ArticleResponse;
 import com.toy.project.board.dto.ArticleUpdateRequest;
 import com.toy.project.board.entity.Article;
+import com.toy.project.board.exception.ArticleNotFoundException;
+import com.toy.project.board.exception.AuthorizeNotMatchException;
 import com.toy.project.board.repository.ArticleRepository;
 import com.toy.project.board.util.ArticleMapperContainer;
-import com.toy.project.user.repository.UserRepository;
+import com.toy.project.authorize.exception.UserNotFoundException;
+import com.toy.project.authorize.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -52,7 +55,10 @@ public class ArticleService {
         var articleReadMapper = articleMapperContainer.getArticleReadMapper();
 
         var newArticle = articleCreateMapper.toEntity(articleCreateRequest);
-        newArticle.setWriter(userRepository.findByUserId(articleCreateRequest.getRequestUserId()));
+        var writer = userRepository.findByUserId(articleCreateRequest.getRequestUserId())
+                        .orElseThrow(() -> new UserNotFoundException("유저정보가 잘못됨"));
+
+        newArticle.setWriter(writer);
 
         var wroteArticle = articleRepository.save(newArticle);
 
@@ -62,19 +68,21 @@ public class ArticleService {
     @Transactional
     public ArticleResponse updateArticle(ArticleUpdateRequest articleUpdateRequest) {
         var articleReadMapper = articleMapperContainer.getArticleReadMapper();
-        var targetArticle = articleRepository.findById(articleUpdateRequest.getId()).orElse(null);
-        var requestUser = userRepository.findByUserId(articleUpdateRequest.getRequestUserId());
 
-        if (targetArticle != null) {
-            if (targetArticle.getWriter().getId().equals(requestUser.getId())) {
-                targetArticle.setTitle(articleUpdateRequest.getTitle());
-                targetArticle.setContent(articleUpdateRequest.getContent());
+        var targetArticle = articleRepository.findById(articleUpdateRequest.getId())
+                .orElseThrow(() -> new ArticleNotFoundException("게시글을 찾을 수 없음"));
 
-                return articleReadMapper.toDto(targetArticle);
-            }
+        var requestUser = userRepository.findByUserId(articleUpdateRequest.getRequestUserId())
+                .orElseThrow(() -> new UserNotFoundException("유저정보가 잘못됨"));
+
+        if (targetArticle.getWriter().getId().equals(requestUser.getId())) {
+            targetArticle.setTitle(articleUpdateRequest.getTitle());
+            targetArticle.setContent(articleUpdateRequest.getContent());
+
+            return articleReadMapper.toDto(targetArticle);
+        } else {
+            throw new AuthorizeNotMatchException("작성자외의 요청");
         }
-
-        return null;
     }
 
     public boolean deleteArticle(Long id) {

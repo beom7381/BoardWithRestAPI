@@ -1,6 +1,6 @@
 package com.toy.project.board.entity;
 
-import com.toy.project.user.entity.User;
+import com.toy.project.authorize.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -2,6 +2,7 @@ package com.toy.project.board.controller;
 
 import com.toy.project.board.dto.ArticleCreateRequest;
 import com.toy.project.board.dto.ArticleUpdateRequest;
+import com.toy.project.board.exception.ArticleNotFoundException;
 import com.toy.project.board.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,23 +13,48 @@ public class ArticleController {
     @Autowired
     private ArticleService articleService;
 
-    @GetMapping("/api/article/{id}")
-    public ResponseEntity<?> getArticle(@PathVariable("id") Long id){
-        return ResponseEntity.ok(articleService.getArticle(id));
+    @GetMapping("/api/articles")
+    public ResponseEntity<?> getArticleList(@RequestParam(value = "page", defaultValue = "0") int page,
+                                            @RequestParam(value = "size", defaultValue = "10") int size) {
+        return ResponseEntity.ok(articleService.getArticleList(page, size));
     }
 
-    @PostMapping("/api/article")
-    public ResponseEntity<?> writeArticle(@RequestBody ArticleCreateRequest articleCreateRequest){
-        return ResponseEntity.ok(articleService.createArticle(articleCreateRequest));
+    @GetMapping("/api/articles/{id}")
+    public ResponseEntity<?> getArticle(@PathVariable("id") Long id) {
+        try {
+            return ResponseEntity.ok(articleService.getArticle(id));
+        } catch (ArticleNotFoundException exception) {
+            return ResponseEntity.badRequest().body("게시글을 찾을 수 없음");
+        } catch (Exception exception) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @PatchMapping("/api/article")
-    public ResponseEntity<?> editArticle(@RequestBody ArticleUpdateRequest articleUpdateRequest){
-        return ResponseEntity.ok(articleService.updateArticle(articleUpdateRequest));
+    @PostMapping("/api/articles")
+    public ResponseEntity<?> writeArticle(@RequestBody ArticleCreateRequest articleCreateRequest) {
+        try {
+            return ResponseEntity.ok(articleService.createArticle(articleCreateRequest));
+        } catch (Exception exception) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    @DeleteMapping("/api/article/{id}")
-    public ResponseEntity<?> removeArticle(@PathVariable("id") Long id){
-        return ResponseEntity.ok(articleService.deleteArticle(id));
+    @PatchMapping("/api/articles")
+    public ResponseEntity<?> editArticle(@RequestBody ArticleUpdateRequest articleUpdateRequest) {
+        try {
+            return ResponseEntity.ok(articleService.updateArticle(articleUpdateRequest));
+        } catch (Exception exception) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping("/api/articles/{id}")
+    public ResponseEntity<?> removeArticle(@PathVariable("id") Long id) {
+        if(articleService.deleteArticle(id)){
+            return ResponseEntity.ok("success");
+        }
+        else{
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

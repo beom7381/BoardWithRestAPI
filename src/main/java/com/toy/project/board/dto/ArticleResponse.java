@@ -1,6 +1,6 @@
 package com.toy.project.board.dto;
 
-import com.toy.project.user.entity.User;
+import com.toy.project.authorize.entity.User;
 import lombok.*;
 
 import java.time.LocalDateTime;

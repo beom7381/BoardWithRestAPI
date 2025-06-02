@@ -3,16 +3,22 @@ package com.toy.project.board.service;
 import com.toy.project.board.dto.CommentCreateRequest;
 import com.toy.project.board.dto.CommentResponse;
 import com.toy.project.board.dto.CommentUpdateRequest;
+import com.toy.project.board.entity.Comment;
+import com.toy.project.board.exception.AuthorizeNotMatchException;
+import com.toy.project.board.exception.CommentNotFoundException;
 import com.toy.project.board.repository.ArticleRepository;
 import com.toy.project.board.repository.CommentRepository;
 import com.toy.project.board.util.CommentMapperContainer;
-import com.toy.project.user.repository.UserRepository;
+import com.toy.project.authorize.exception.UserNotFoundException;
+import com.toy.project.authorize.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class CommentService {
     private final CommentRepository commentRepository;
@@ -44,12 +50,19 @@ public class CommentService {
         var commentCreateMapper = commentMapperContainer.getCommentCreateMapper();
         var commentReadMapper = commentMapperContainer.getCommentReadMapper();
 
-        var requestUser = userRepository.findByUserId(commentCreateRequest.getRequestUserId());
+        var requestUser = userRepository.findByUserId(commentCreateRequest.getRequestUserId())
+                .orElseThrow(() -> new UserNotFoundException("유저정보가 잘못됨"));
+
         var article = articleRepository.findById(commentCreateRequest.getArticleId())
-                .orElseThrow(() -> new EntityNotFoundException("게시글이 존재하지 않습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없음"));
 
         var comment = commentCreateMapper.toEntity(commentCreateRequest);
-        var parentComment = commentRepository.findById(commentCreateRequest.getParentId()).orElse(null);
+
+        Comment parentComment = null;
+
+        if (commentCreateRequest.getParentId() != null) {
+            parentComment = commentRepository.findById(commentCreateRequest.getParentId()).orElse(null);
+        }
 
         comment.setArticle(article);
         comment.setWriter(requestUser);
@@ -59,28 +72,34 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentResponse updateComment(CommentUpdateRequest commentUpdateRequest){
-        var mapper = commentMapperContainer.getCommentReadMapper();
-        var requestUser = userRepository.findByUserId(commentUpdateRequest.getRequestUserId());
-        var targetComment = commentRepository.findById(commentUpdateRequest.getId()).orElse(null);
+    public CommentResponse updateComment(CommentUpdateRequest commentUpdateRequest) {
+        var commentReadMapper = commentMapperContainer.getCommentReadMapper();
 
-        if(targetComment != null){
+        var requestUser = userRepository.findByUserId(commentUpdateRequest.getRequestUserId())
+                .orElseThrow(() -> new UserNotFoundException("유저정보가 잘못됨"));
+
+        var targetComment = commentRepository.findById(commentUpdateRequest.getId())
+                .orElseThrow(() -> new CommentNotFoundException("댓글을 찾을 수 없음"));
+
+        if(targetComment.getWriter().getUserId().equals(requestUser.getUserId())){
             targetComment.setBody(commentUpdateRequest.getBody());
-        }
 
-        return mapper.toDto(targetComment);
+            return commentReadMapper.toDto(targetComment);
+        }
+        else{
+            throw new AuthorizeNotMatchException("본인외의 접근 시도");
+        }
     }
 
-    public boolean deleteComment(Long id){
-        try{
+    public boolean deleteComment(Long id) {
+        try {
             var targetComment = commentRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("삭제할 댓글이 존해하지 않습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException("삭제할 댓글이 존해하지 않음"));
 
             commentRepository.delete(targetComment);
 
             return true;
-        }
-        catch (Exception ex){
+        } catch (Exception ex) {
             return false;
         }
     }
