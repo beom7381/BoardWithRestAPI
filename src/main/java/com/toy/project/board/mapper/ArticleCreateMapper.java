@@ -1,6 +1,6 @@
 package com.toy.project.board.mapper;
 
-import com.toy.project.interfaces.DtoToEntityMapperInterface;
+import com.toy.project.global.interfaces.DtoToEntityMapperInterface;
 import com.toy.project.board.dto.ArticleCreateRequest;
 import com.toy.project.board.entity.Article;
 import org.springframework.stereotype.Component;

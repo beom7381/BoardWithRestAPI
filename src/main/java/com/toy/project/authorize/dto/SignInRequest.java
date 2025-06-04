@@ -1,6 +1,6 @@
 package com.toy.project.authorize.dto;
 
-import com.toy.project.interfaces.DtoInterface;
+import com.toy.project.global.interfaces.DtoInterface;
 import lombok.*;
 
 @Getter

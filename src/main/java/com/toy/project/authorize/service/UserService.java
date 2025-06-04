@@ -4,11 +4,11 @@ import com.toy.project.authorize.dto.SignInRequest;
 import com.toy.project.authorize.dto.SignUpRequest;
 import com.toy.project.authorize.dto.UserDataResponse;
 import com.toy.project.authorize.entity.User;
-import com.toy.project.authorize.exception.DuplicateIdException;
-import com.toy.project.authorize.exception.DuplicateNameException;
 import com.toy.project.authorize.repository.UserRepository;
 import com.toy.project.authorize.util.JwtUtil;
 import com.toy.project.authorize.util.UserMapperContainer;
+import com.toy.project.global.exception.DuplicateDataException;
+import com.toy.project.global.exception.SignInFailedException;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -49,19 +49,19 @@ public class UserService {
         var newUser = userCreateMapper.toEntity(signUpRequest);
 
         if(userRepository.existsByUserId(newUser.getUserId())){
-            throw new DuplicateIdException("중복된 아이디");
+            throw new DuplicateDataException();
         }
 
         if(userRepository.existsByUserName(newUser.getUserName())){
-            throw new DuplicateNameException("중복된 이름");
+            throw new DuplicateDataException();
         }
 
         return userDataResponseMapper.toDto(userRepository.save(newUser));
     }
 
-    public String signIn(SignInRequest signInRequest) throws Exception {
+    public String signIn(SignInRequest signInRequest) {
         var user = userRepository.findByUserIdAndUserPw(signInRequest.getUserId(), signInRequest.getUserPw())
-                .orElseThrow(() -> new Exception(""));
+                .orElseThrow(SignInFailedException::new);
 
         return jwtUtil.generateToken(user);
     }

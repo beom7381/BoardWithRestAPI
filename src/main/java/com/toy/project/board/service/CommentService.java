@@ -1,17 +1,17 @@
 package com.toy.project.board.service;
 
+import com.toy.project.authorize.repository.UserRepository;
 import com.toy.project.board.dto.CommentCreateRequest;
 import com.toy.project.board.dto.CommentResponse;
 import com.toy.project.board.dto.CommentUpdateRequest;
 import com.toy.project.board.entity.Comment;
-import com.toy.project.board.exception.AuthorizeNotMatchException;
-import com.toy.project.board.exception.CommentNotFoundException;
 import com.toy.project.board.repository.ArticleRepository;
 import com.toy.project.board.repository.CommentRepository;
 import com.toy.project.board.util.CommentMapperContainer;
-import com.toy.project.authorize.exception.UserNotFoundException;
-import com.toy.project.authorize.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.toy.project.global.exception.AuthorNotMatchException;
+import com.toy.project.global.exception.DeleteException;
+import com.toy.project.global.exception.RequestEntityNotFoundException;
+import com.toy.project.global.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,10 +51,10 @@ public class CommentService {
         var commentReadMapper = commentMapperContainer.getCommentReadMapper();
 
         var requestUser = userRepository.findByUserId(commentCreateRequest.getRequestUserId())
-                .orElseThrow(() -> new UserNotFoundException("유저정보가 잘못됨"));
+                .orElseThrow(UserNotFoundException::new);
 
         var article = articleRepository.findById(commentCreateRequest.getArticleId())
-                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없음"));
+                .orElseThrow(RequestEntityNotFoundException::new);
 
         var comment = commentCreateMapper.toEntity(commentCreateRequest);
 
@@ -76,10 +76,10 @@ public class CommentService {
         var commentReadMapper = commentMapperContainer.getCommentReadMapper();
 
         var requestUser = userRepository.findByUserId(commentUpdateRequest.getRequestUserId())
-                .orElseThrow(() -> new UserNotFoundException("유저정보가 잘못됨"));
+                .orElseThrow(UserNotFoundException::new);
 
         var targetComment = commentRepository.findById(commentUpdateRequest.getId())
-                .orElseThrow(() -> new CommentNotFoundException("댓글을 찾을 수 없음"));
+                .orElseThrow(RequestEntityNotFoundException::new);
 
         if(targetComment.getWriter().getUserId().equals(requestUser.getUserId())){
             targetComment.setBody(commentUpdateRequest.getBody());
@@ -87,20 +87,18 @@ public class CommentService {
             return commentReadMapper.toDto(targetComment);
         }
         else{
-            throw new AuthorizeNotMatchException("본인외의 접근 시도");
+            throw new AuthorNotMatchException();
         }
     }
 
-    public boolean deleteComment(Long id) {
+    public void deleteComment(Long id) {
         try {
             var targetComment = commentRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("삭제할 댓글이 존해하지 않음"));
+                    .orElseThrow(RequestEntityNotFoundException::new);
 
             commentRepository.delete(targetComment);
-
-            return true;
         } catch (Exception ex) {
-            return false;
+            throw new DeleteException();
         }
     }
 }

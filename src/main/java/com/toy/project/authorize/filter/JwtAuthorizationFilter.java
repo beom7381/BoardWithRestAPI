@@ -22,7 +22,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     public JwtAuthorizationFilter(
             UserService userService,
-            JwtUtil jwtUtil){
+            JwtUtil jwtUtil) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
     }
@@ -30,34 +30,33 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        try {
-            boolean debugmode = false;
+        boolean debugMode = false;
 
+        try {
             String token = jwtUtil.resolveToken(request.getHeader("Authorization"));
 
-            if(debugmode){
+            if (token != null && jwtUtil.validateToken(token)) {
+                String userId = jwtUtil.getUserId(token);
+                User authenUser = userService.getUserFromUserId(userId);
+
+                UsernamePasswordAuthenticationToken authenticationToken
+                        = new UsernamePasswordAuthenticationToken(authenUser, null, null);
+
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            }
+        } catch (JwtException exception) {
+            if (debugMode) {
                 UsernamePasswordAuthenticationToken authenticationToken
                         = new UsernamePasswordAuthenticationToken("hi", null, null);
 
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            }
-            else{
-                if (token != null && jwtUtil.validateToken(token) && !debugmode) {
-                    String userId = jwtUtil.getUserId(token);
-                    User authenUser = userService.getUserFromUserId(userId);
 
-                    UsernamePasswordAuthenticationToken authenticationToken
-                            = new UsernamePasswordAuthenticationToken(authenUser, null, null);
-
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                }
+                return;
             }
-        }
-        catch (JwtException exception){
+
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             SecurityContextHolder.clearContext();
-        }
-        finally {
+        } finally {
             filterChain.doFilter(request, response);
         }
     }

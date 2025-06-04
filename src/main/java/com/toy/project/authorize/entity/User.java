@@ -1,6 +1,6 @@
 package com.toy.project.authorize.entity;
 
-import com.toy.project.interfaces.EntityInterface;
+import com.toy.project.global.interfaces.EntityInterface;
 import jakarta.persistence.*;
 import lombok.*;
 

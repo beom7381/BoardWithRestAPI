@@ -2,7 +2,7 @@ package com.toy.project.board.mapper;
 
 import com.toy.project.board.dto.CommentResponse;
 import com.toy.project.board.entity.Comment;
-import com.toy.project.interfaces.EntityToDtoMapperInterface;
+import com.toy.project.global.interfaces.EntityToDtoMapperInterface;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;

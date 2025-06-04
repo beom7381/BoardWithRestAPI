@@ -1,7 +1,7 @@
 package com.toy.project.authorize.util;
 
-import com.toy.project.interfaces.DtoToEntityMapperInterface;
-import com.toy.project.interfaces.EntityToDtoMapperInterface;
+import com.toy.project.global.interfaces.DtoToEntityMapperInterface;
+import com.toy.project.global.interfaces.EntityToDtoMapperInterface;
 import com.toy.project.authorize.dto.SignUpRequest;
 import com.toy.project.authorize.dto.UserDataResponse;
 import com.toy.project.authorize.entity.User;

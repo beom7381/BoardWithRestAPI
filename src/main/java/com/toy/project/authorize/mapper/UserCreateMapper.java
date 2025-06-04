@@ -1,6 +1,6 @@
 package com.toy.project.authorize.mapper;
 
-import com.toy.project.interfaces.DtoToEntityMapperInterface;
+import com.toy.project.global.interfaces.DtoToEntityMapperInterface;
 import com.toy.project.authorize.dto.SignUpRequest;
 import com.toy.project.authorize.entity.User;
 import org.springframework.stereotype.Component;

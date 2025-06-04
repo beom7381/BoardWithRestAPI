@@ -1,7 +1,7 @@
 package com.toy.project.board.util;
 
-import com.toy.project.interfaces.DtoToEntityMapperInterface;
-import com.toy.project.interfaces.EntityToDtoMapperInterface;
+import com.toy.project.global.interfaces.DtoToEntityMapperInterface;
+import com.toy.project.global.interfaces.EntityToDtoMapperInterface;
 import com.toy.project.board.dto.CommentCreateRequest;
 import com.toy.project.board.dto.CommentResponse;
 import com.toy.project.board.entity.Comment;

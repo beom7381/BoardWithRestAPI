@@ -2,7 +2,6 @@ package com.toy.project.board.controller;
 
 import com.toy.project.board.dto.ArticleCreateRequest;
 import com.toy.project.board.dto.ArticleUpdateRequest;
-import com.toy.project.board.exception.ArticleNotFoundException;
 import com.toy.project.board.service.ArticleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,40 +20,23 @@ public class ArticleController {
 
     @GetMapping("/api/articles/{id}")
     public ResponseEntity<?> getArticle(@PathVariable("id") Long id) {
-        try {
-            return ResponseEntity.ok(articleService.getArticle(id));
-        } catch (ArticleNotFoundException exception) {
-            return ResponseEntity.badRequest().body("게시글을 찾을 수 없음");
-        } catch (Exception exception) {
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.ok(articleService.getArticle(id));
     }
 
     @PostMapping("/api/articles")
     public ResponseEntity<?> writeArticle(@RequestBody ArticleCreateRequest articleCreateRequest) {
-        try {
-            return ResponseEntity.ok(articleService.createArticle(articleCreateRequest));
-        } catch (Exception exception) {
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.ok(articleService.createArticle(articleCreateRequest));
     }
 
     @PatchMapping("/api/articles")
     public ResponseEntity<?> editArticle(@RequestBody ArticleUpdateRequest articleUpdateRequest) {
-        try {
-            return ResponseEntity.ok(articleService.updateArticle(articleUpdateRequest));
-        } catch (Exception exception) {
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.ok(articleService.updateArticle(articleUpdateRequest));
     }
 
     @DeleteMapping("/api/articles/{id}")
     public ResponseEntity<?> removeArticle(@PathVariable("id") Long id) {
-        if(articleService.deleteArticle(id)){
-            return ResponseEntity.ok("success");
-        }
-        else{
-            return ResponseEntity.internalServerError().build();
-        }
+        articleService.deleteArticle(id);
+
+        return ResponseEntity.ok().build();
     }
 }

@@ -4,11 +4,12 @@ import com.toy.project.board.dto.ArticleCreateRequest;
 import com.toy.project.board.dto.ArticleResponse;
 import com.toy.project.board.dto.ArticleUpdateRequest;
 import com.toy.project.board.entity.Article;
-import com.toy.project.board.exception.ArticleNotFoundException;
-import com.toy.project.board.exception.AuthorizeNotMatchException;
+import com.toy.project.global.exception.DeleteException;
+import com.toy.project.global.exception.RequestEntityNotFoundException;
+import com.toy.project.global.exception.AuthorNotMatchException;
 import com.toy.project.board.repository.ArticleRepository;
 import com.toy.project.board.util.ArticleMapperContainer;
-import com.toy.project.authorize.exception.UserNotFoundException;
+import com.toy.project.global.exception.UserNotFoundException;
 import com.toy.project.authorize.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -56,7 +57,7 @@ public class ArticleService {
 
         var newArticle = articleCreateMapper.toEntity(articleCreateRequest);
         var writer = userRepository.findByUserId(articleCreateRequest.getRequestUserId())
-                        .orElseThrow(() -> new UserNotFoundException("유저정보가 잘못됨"));
+                        .orElseThrow(UserNotFoundException::new);
 
         newArticle.setWriter(writer);
 
@@ -70,10 +71,10 @@ public class ArticleService {
         var articleReadMapper = articleMapperContainer.getArticleReadMapper();
 
         var targetArticle = articleRepository.findById(articleUpdateRequest.getId())
-                .orElseThrow(() -> new ArticleNotFoundException("게시글을 찾을 수 없음"));
+                .orElseThrow(RequestEntityNotFoundException::new);
 
         var requestUser = userRepository.findByUserId(articleUpdateRequest.getRequestUserId())
-                .orElseThrow(() -> new UserNotFoundException("유저정보가 잘못됨"));
+                .orElseThrow(UserNotFoundException::new);
 
         if (targetArticle.getWriter().getId().equals(requestUser.getId())) {
             targetArticle.setTitle(articleUpdateRequest.getTitle());
@@ -81,19 +82,16 @@ public class ArticleService {
 
             return articleReadMapper.toDto(targetArticle);
         } else {
-            throw new AuthorizeNotMatchException("작성자외의 요청");
+            throw new AuthorNotMatchException();
         }
     }
 
-    public boolean deleteArticle(Long id) {
-        var targerArticle = articleRepository.findById(id).orElse(null);
-
-        if (targerArticle != null) {
-            articleRepository.delete(targerArticle);
-
-            return true;
+    public void deleteArticle(Long id) {
+        try{
+            articleRepository.findById(id).ifPresent(articleRepository::delete);
         }
-
-        return false;
+        catch (Exception exception){
+            throw new DeleteException();
+        }
     }
 }
