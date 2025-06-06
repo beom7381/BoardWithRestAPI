@@ -11,4 +11,5 @@ import lombok.*;
 public class SignInRequest implements DtoInterface {
     private String userId;
     private String userPw;
+    private boolean createRefreshToken;
 }

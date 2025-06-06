@@ -12,7 +12,7 @@ public class UserDataResponseMapper implements EntityToDtoMapperInterface<User, 
         return new UserDataResponse(
                 entity.getId(),
                 entity.getUserId(),
-                entity.getUserName()
+                entity.getNickName()
         );
     }
 }

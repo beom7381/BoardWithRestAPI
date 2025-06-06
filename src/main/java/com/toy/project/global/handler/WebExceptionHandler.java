@@ -13,12 +13,16 @@ public class WebExceptionHandler {
     public ResponseEntity<ErrorResponse> handleWebRequestException(WebRequestException exception){
         var error = exception.getError();
 
+        exception.printStackTrace();;
+
         return ResponseEntity.status(error.getStatus())
                 .body(new ErrorResponse(error));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(){
+    public ResponseEntity<ErrorResponse> handleException(Exception exception){
+        exception.printStackTrace();
+
         return ResponseEntity.internalServerError()
                 .body(new ErrorResponse(RequestError.INTERNAL_SERVER_ERROR));
     }

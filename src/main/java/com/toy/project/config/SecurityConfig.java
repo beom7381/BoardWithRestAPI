@@ -1,12 +1,15 @@
 package com.toy.project.config;
 
-import com.toy.project.authorize.filter.JwtAuthorizationFilter;
+import com.toy.project.authorize.filter.AccessTokenFilter;
 import com.toy.project.authorize.service.UserService;
-import com.toy.project.authorize.util.JwtUtil;
+import com.toy.project.authorize.util.JwtProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -14,9 +17,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
     private final UserService userService;
-    private final JwtUtil jwtUtil;
+    private final JwtProvider jwtUtil;
 
-    public SecurityConfig(UserService userService, JwtUtil jwtUtil){
+    public SecurityConfig(UserService userService, JwtProvider jwtUtil) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
     }
@@ -24,14 +27,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
+                .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth ->
+                        auth
                         .requestMatchers("/api/user/signin",
                                 "/api/user/signup",
-                                "swagger-ui/index.html").permitAll()
+                                "/api/user/refresh",
+                                "/swagger-ui/index.html",
+                                "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthorizationFilter(userService, jwtUtil),
+                .addFilterBefore(new AccessTokenFilter(userService, jwtUtil),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

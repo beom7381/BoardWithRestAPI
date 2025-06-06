@@ -13,7 +13,7 @@ public class CommentReadMapper implements EntityToDtoMapperInterface<Comment, Co
     public CommentResponse toDto(Comment comment) {
         return CommentResponse.builder()
                 .id(comment.getId())
-                .writerName(comment.getWriter().getUserName())
+                .writerName(comment.getWriter().getNickName())
                 .body(comment.getBody())
                 .createdAt(comment.getCreatedAt())
                 .children(
