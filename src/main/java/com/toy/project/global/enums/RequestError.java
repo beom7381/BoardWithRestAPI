@@ -12,7 +12,7 @@ public enum RequestError {
     DUPLICATE_DATA(HttpStatus.BAD_REQUEST, "CLIENT_003","중복되는 데이터를 입력받았습니다."),
     ACCESSTOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "CLIENT_004", "Access Token이 만료되었습니다."),
     REFRESHTOKEN_EXPIRED(HttpStatus.FORBIDDEN, "CLIENT_005", "Refresh Token이 만료되었습니다."),
-    LOGIN_FAILED(HttpStatus.BAD_REQUEST, "CLIENT_004", "로그인에 실패하였습니다."),
+    LOGIN_FAILED(HttpStatus.BAD_REQUEST, "CLIENT_006", "로그인에 실패하였습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER_001", "서버에서 예외처리되지않은 오류가 발생하였습니다."),
     DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SERVER_002","데이터 삭제에 실패했습니다.");
 
