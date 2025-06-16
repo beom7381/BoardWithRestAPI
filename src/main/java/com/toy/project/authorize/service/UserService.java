@@ -5,13 +5,14 @@ import com.toy.project.authorize.dto.JwtResponse;
 import com.toy.project.authorize.dto.SignInRequest;
 import com.toy.project.authorize.dto.SignUpRequest;
 import com.toy.project.authorize.dto.UserDataResponse;
-import com.toy.project.authorize.entity.RefreshToken;
 import com.toy.project.authorize.entity.User;
-import com.toy.project.authorize.repository.RefreshTokenRepository;
 import com.toy.project.authorize.repository.UserRepository;
 import com.toy.project.authorize.util.JwtProvider;
 import com.toy.project.authorize.util.UserMapperContainer;
-import com.toy.project.global.exception.*;
+import com.toy.project.global.exception.DuplicateDataException;
+import com.toy.project.global.exception.RefreshTokenExpiredException;
+import com.toy.project.global.exception.SignInFailedException;
+import com.toy.project.global.exception.UserNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,17 +26,18 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class UserService {
+    private final RedisService redisService;
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final UserMapperContainer userMapperContainer;
     private final JwtProvider jwtProvider;
 
-    public UserService(UserRepository userRepository,
-                       RefreshTokenRepository refreshTokenRepository,
-                       UserMapperContainer userMapperContainer,
-                       JwtProvider jwtProvider) {
+    public UserService(
+            RedisService redisService,
+            UserRepository userRepository,
+            UserMapperContainer userMapperContainer,
+            JwtProvider jwtProvider) {
+        this.redisService = redisService;
         this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.userMapperContainer = userMapperContainer;
         this.jwtProvider = jwtProvider;
     }
@@ -76,35 +78,42 @@ public class UserService {
         String refreshToken = null;
         String accessToken = jwtProvider.generateAccessToken(user);
 
-        if(signInRequest.isCreateRefreshToken()){
+        if (signInRequest.isCreateRefreshToken()) {
             refreshToken = jwtProvider.generateRefreshToken(user);
             response.addCookie(createRefreshTokenCookie(refreshToken));
 
-            refreshTokenRepository.save(new RefreshToken(user.getUserId(), refreshToken));
+            redisService.saveRefreshToken(user.getUserId(), refreshToken, CONSTATNS.REFRESH_TOKEN_EXPIRY_DAY);
         }
 
         return new JwtResponse(refreshToken, accessToken);
     }
 
-    public void signOut(String userId) {
+    public void signOut(String accessToken, HttpServletResponse response) {
+        var token = jwtProvider.resolveAccessToken(accessToken);
+        var tokenData = jwtProvider.parseToken(token);
+        var userId = jwtProvider.getUserId(tokenData);
+
         var user = userRepository.findByUserId(userId)
                 .orElseThrow(UserNotFoundException::new);
-        var token = refreshTokenRepository.findById(user.getUserId())
-                .orElseThrow(RequestEntityNotFoundException::new);
 
-        refreshTokenRepository.delete(token);
+        if (redisService.hasRefreshToken(userId)) {
+            redisService.deleteRefreshToken(userId);
+            response.addCookie(createRefreshTokenCookie(null));
+            //리프레시토큰 쿠키 제거
+        }
+
+        redisService.blockAccessToken(accessToken, CONSTATNS.ACCESS_TOKEN_EXPIRY_DAY);
     }
 
     public JwtResponse refreshingAccessToken(String userId, HttpServletRequest request) {
         var user = userRepository.findByUserId(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        var userRefreshToken = refreshTokenRepository.findById(userId)
-                .orElseThrow(RefreshTokenExpiredException::new);
+        var userRefreshToken = redisService.getRefreshToken(userId);
 
-        var requestToken = getRefreshTokenFromCookie(request).orElse(null);
+        var requestRefreshToken = getRefreshTokenFromCookie(request).orElse(null);
 
-        if (!userRefreshToken.getRefreshToken().equals(requestToken)) {
+        if (!userRefreshToken.equals(requestRefreshToken)) {
             throw new RefreshTokenExpiredException();
         }
 
@@ -118,7 +127,7 @@ public class UserService {
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setMaxAge(CONSTATNS.REFRESHTOKEN_EXPIRY_DAY.intValue());
+        cookie.setMaxAge(CONSTATNS.REFRESH_TOKEN_EXPIRY_DAY.intValue());
 
         return cookie;
     }

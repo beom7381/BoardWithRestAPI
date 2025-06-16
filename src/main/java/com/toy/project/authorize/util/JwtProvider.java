@@ -29,7 +29,7 @@ public class JwtProvider {
      */
     public String generateRefreshToken(User user){
         Date issueAt = new Date(System.currentTimeMillis());
-        Date expiryDate = new Date(System.currentTimeMillis() + CONSTATNS.REFRESHTOKEN_EXPIRY_DAY);
+        Date expiryDate = new Date(System.currentTimeMillis() + CONSTATNS.REFRESH_TOKEN_EXPIRY_DAY);
 
         return Jwts.builder()
                 .setSubject(user.getUserId())
@@ -41,7 +41,7 @@ public class JwtProvider {
 
     public String generateAccessToken(User user) {
         Date issueAt = new Date(System.currentTimeMillis());
-        Date expiryDate = new Date(System.currentTimeMillis() + CONSTATNS.ACCESSTOKEN_EXPIRY_DAY);
+        Date expiryDate = new Date(System.currentTimeMillis() + CONSTATNS.ACCESS_TOKEN_EXPIRY_DAY);
 
         return Jwts.builder()
                 .setSubject(user.getUserId())
@@ -65,5 +65,19 @@ public class JwtProvider {
 
     public boolean isTokenExpired(Claims token) {
         return token.getExpiration().before(new Date());
+    }
+
+    public String resolveAccessToken(String header) {
+        String token;
+
+        try {
+            token = (header != null && header.startsWith("Bearer "))
+                    ? header.substring(7) : null;
+
+        } catch (Exception e) {
+            token = null;
+        }
+
+        return token;
     }
 }

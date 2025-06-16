@@ -1,6 +1,7 @@
-package com.toy.project.config;
+package com.toy.project.global.config;
 
 import com.toy.project.authorize.filter.AccessTokenFilter;
+import com.toy.project.authorize.service.RedisService;
 import com.toy.project.authorize.service.UserService;
 import com.toy.project.authorize.util.JwtProvider;
 import org.springframework.context.annotation.Bean;
@@ -17,10 +18,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
     private final UserService userService;
+    private final RedisService redisService;
     private final JwtProvider jwtUtil;
 
-    public SecurityConfig(UserService userService, JwtProvider jwtUtil) {
+    public SecurityConfig(UserService userService, RedisService redisService, JwtProvider jwtUtil) {
         this.userService = userService;
+        this.redisService = redisService;
         this.jwtUtil = jwtUtil;
     }
 
@@ -39,11 +42,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/signin",
                                 "/api/user/signup",
                                 "/api/user/refresh",
+                                "/api/user/signout",
                                 "/swagger-ui/index.html",
                                 "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new AccessTokenFilter(userService, jwtUtil),
+                .addFilterBefore(new AccessTokenFilter(userService, redisService, jwtUtil),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

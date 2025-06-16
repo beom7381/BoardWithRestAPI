@@ -35,8 +35,10 @@ public class UserController {
     }
 
     @PostMapping("/api/user/signout")
-    public ResponseEntity<?> signOut(@RequestHeader String header) {
-        userService.signOut(header);
+    public ResponseEntity<?> signOut(
+            @RequestHeader(value = "Authorization", required = false) String accessToken,
+            HttpServletResponse response) {
+        userService.signOut(accessToken, response);
 
         return ResponseEntity.ok().build();
     }

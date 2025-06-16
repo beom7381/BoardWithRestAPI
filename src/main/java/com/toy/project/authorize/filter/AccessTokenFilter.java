@@ -1,6 +1,7 @@
 package com.toy.project.authorize.filter;
 
 import com.toy.project.authorize.entity.User;
+import com.toy.project.authorize.service.RedisService;
 import com.toy.project.authorize.service.UserService;
 import com.toy.project.authorize.util.JwtProvider;
 import com.toy.project.global.exception.AccessTokenExpiredException;
@@ -21,12 +22,15 @@ import java.util.List;
 @Slf4j
 public class AccessTokenFilter extends OncePerRequestFilter {
     private final UserService userService;
+    private final RedisService redisService;
     private final JwtProvider jwtProvider;
 
     public AccessTokenFilter(
             UserService userService,
+            RedisService redisService,
             JwtProvider jwtProvider) {
         this.userService = userService;
+        this.redisService = redisService;
         this.jwtProvider = jwtProvider;
     }
 
@@ -34,18 +38,21 @@ public class AccessTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-            String token = resolveAccessToken(request.getHeader("Authorization"));
+            String token = jwtProvider.resolveAccessToken(request.getHeader("Authorization"));
 
             if (token != null) {
                 Claims tokenData = jwtProvider.parseToken(token);
-                String userId = jwtProvider.getUserId(tokenData);
 
-                User authenUser = userService.getUserFromUserId(userId);
+                if(!redisService.isAccessTokenBlocked(token)){
+                    String userId = jwtProvider.getUserId(tokenData);
 
-                UsernamePasswordAuthenticationToken authenticationToken
-                        = new UsernamePasswordAuthenticationToken(authenUser, null, null);
+                    User authenUser = userService.getUserFromUserId(userId);
 
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                    UsernamePasswordAuthenticationToken authenticationToken
+                            = new UsernamePasswordAuthenticationToken(authenUser, null, null);
+
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
             }
 
             filterChain.doFilter(request, response);
@@ -54,20 +61,6 @@ public class AccessTokenFilter extends OncePerRequestFilter {
 
             throw new AccessTokenExpiredException();
         }
-    }
-
-    private String resolveAccessToken(String header) {
-        String token;
-
-        try {
-            token = (header != null && header.startsWith("Bearer "))
-                    ? header.substring(7) : null;
-
-        } catch (Exception e) {
-            token = null;
-        }
-
-        return token;
     }
 
     @Override
