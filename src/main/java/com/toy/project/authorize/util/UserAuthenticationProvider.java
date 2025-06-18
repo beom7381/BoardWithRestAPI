@@ -1,4 +1,4 @@
-package com.toy.project.authorize;
+package com.toy.project.authorize.util;
 
 import com.toy.project.authorize.service.UserService;
 import com.toy.project.global.exception.SignInFailedException;

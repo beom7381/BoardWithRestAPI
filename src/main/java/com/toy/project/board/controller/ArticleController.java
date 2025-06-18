@@ -3,6 +3,7 @@ package com.toy.project.board.controller;
 import com.toy.project.board.dto.ArticleCreateRequest;
 import com.toy.project.board.dto.ArticleUpdateRequest;
 import com.toy.project.board.service.ArticleService;
+import com.toy.project.global.annotation.RequireAccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,16 +24,19 @@ public class ArticleController {
         return ResponseEntity.ok(articleService.getArticle(id));
     }
 
+    @RequireAccessToken
     @PostMapping("/api/articles")
     public ResponseEntity<?> writeArticle(@RequestBody ArticleCreateRequest articleCreateRequest) {
         return ResponseEntity.ok(articleService.createArticle(articleCreateRequest));
     }
 
+    @RequireAccessToken
     @PatchMapping("/api/articles")
     public ResponseEntity<?> editArticle(@RequestBody ArticleUpdateRequest articleUpdateRequest) {
         return ResponseEntity.ok(articleService.updateArticle(articleUpdateRequest));
     }
 
+    @RequireAccessToken
     @DeleteMapping("/api/articles/{id}")
     public ResponseEntity<?> removeArticle(@PathVariable("id") Long id) {
         articleService.deleteArticle(id);

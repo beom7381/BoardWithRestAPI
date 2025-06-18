@@ -3,6 +3,7 @@ package com.toy.project.board.controller;
 import com.toy.project.board.dto.CommentCreateRequest;
 import com.toy.project.board.dto.CommentUpdateRequest;
 import com.toy.project.board.service.CommentService;
+import com.toy.project.global.annotation.RequireAccessToken;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,16 +22,19 @@ public class CommentController {
         return ResponseEntity.ok(commentService.getCommentList(articleId));
     }
 
+    @RequireAccessToken
     @PostMapping("/api/comment/")
     public ResponseEntity<?> writeComment(@RequestBody CommentCreateRequest commentCreateRequest) {
         return ResponseEntity.ok(commentService.createComment(commentCreateRequest));
     }
 
+    @RequireAccessToken
     @PatchMapping("/api/comment/{id}")
     public ResponseEntity<?> editComment(@RequestBody CommentUpdateRequest commentUpdateRequest) {
         return ResponseEntity.ok(commentService.updateComment(commentUpdateRequest));
     }
 
+    @RequireAccessToken
     @DeleteMapping("/api/comment/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable("id") Long id) {
         commentService.deleteComment(id);

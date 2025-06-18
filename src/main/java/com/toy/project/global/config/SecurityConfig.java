@@ -1,6 +1,5 @@
 package com.toy.project.global.config;
 
-import com.toy.project.authorize.filter.AccessTokenFilter;
 import com.toy.project.authorize.service.RedisService;
 import com.toy.project.authorize.service.UserService;
 import com.toy.project.authorize.util.JwtProvider;
@@ -12,7 +11,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -38,6 +36,9 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth ->
+                        auth.anyRequest().permitAll());
+                /*
+                .authorizeHttpRequests(auth ->
                         auth
                         .requestMatchers("/api/user/signin",
                                 "/api/user/signup",
@@ -49,7 +50,7 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(new AccessTokenFilter(userService, redisService, jwtUtil),
                         UsernamePasswordAuthenticationFilter.class);
-
+*/
         return http.build();
     }
 }
