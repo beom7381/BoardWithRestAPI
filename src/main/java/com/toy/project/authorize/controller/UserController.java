@@ -3,7 +3,6 @@ package com.toy.project.authorize.controller;
 import com.toy.project.authorize.dto.SignInRequest;
 import com.toy.project.authorize.dto.SignUpRequest;
 import com.toy.project.authorize.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -54,7 +53,7 @@ public class UserController {
      */
     @PostMapping("/api/user/refresh")
     public ResponseEntity<?> refreshingToken(@RequestBody String userId,
-                                             HttpServletRequest request){
-        return ResponseEntity.ok(userService.refreshingAccessToken(userId, request));
+                                             @CookieValue(name = "Refresh-Token", required = false) String refreshToken){
+        return ResponseEntity.ok(userService.refreshingAccessToken(userId, refreshToken));
     }
 }

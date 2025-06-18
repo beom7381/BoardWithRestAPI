@@ -14,14 +14,11 @@ import com.toy.project.global.exception.RefreshTokenExpiredException;
 import com.toy.project.global.exception.SignInFailedException;
 import com.toy.project.global.exception.UserNotFoundException;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -105,15 +102,19 @@ public class UserService {
         redisService.blockAccessToken(accessToken, CONSTATNS.ACCESS_TOKEN_EXPIRY_DAY);
     }
 
-    public JwtResponse refreshingAccessToken(String userId, HttpServletRequest request) {
+    public JwtResponse refreshingAccessToken(String userId, String refreshToken) {
+        if (refreshToken == null) {
+            throw new RefreshTokenExpiredException();
+        }
+
+        System.out.println(refreshToken);
+
         var user = userRepository.findByUserId(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         var userRefreshToken = redisService.getRefreshToken(userId);
 
-        var requestRefreshToken = getRefreshTokenFromCookie(request).orElse(null);
-
-        if (!userRefreshToken.equals(requestRefreshToken)) {
+        if (!userRefreshToken.equals(refreshToken)) {
             throw new RefreshTokenExpiredException();
         }
 
@@ -130,12 +131,5 @@ public class UserService {
         cookie.setMaxAge(CONSTATNS.REFRESH_TOKEN_EXPIRY_DAY.intValue());
 
         return cookie;
-    }
-
-    private Optional<String> getRefreshTokenFromCookie(HttpServletRequest request) {
-        return Arrays.stream(request.getCookies())
-                .filter(c -> c.getName().equals("Refresh-Token"))
-                .map(Cookie::getValue)
-                .findFirst();
     }
 }
